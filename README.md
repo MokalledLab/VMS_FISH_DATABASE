@@ -5,3 +5,6 @@ Welcome to the VMS Fish Database, a tool designed to support the zebrafish resea
 You have flexible options for setting up and accessing the VMS Fish Database. You can either upload it to the shinyapp.io cloud platform for easy remote access and collaboration or download and install it in your local device. Step-by-step instructions for both options are provided below to help you get started.
 
 The VMS Fish Database comes with two default accounts: one administrator account (Username: Administrator) and one standard account (Username: User1). Currently, both accounts share the same default password: zebrafish
+
+## Citations
+[![DOI](https://zenodo.org/badge/895200394.svg)](https://doi.org/10.5281/zenodo.14231783)
