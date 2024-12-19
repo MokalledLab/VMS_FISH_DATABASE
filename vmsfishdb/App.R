@@ -21,12 +21,12 @@ library(igraph)
 
 find_empty_tanks<-function(file){
   tanks<-as.character(file$Tank.Name)
-  #tanks<- file$Tank.Name
+
   tanks<-tanks[!is.na(tanks)]
   empty_tanks<-c()
   for (i in 1:length(tanks)){
     x<-length(unlist(strsplit(as.character(file[i,4]),"")))
-    #print(paste(tanks[i],x))
+
     if(x<2){
       empty_tanks<-append(empty_tanks,file[i,1])
     }
@@ -37,12 +37,12 @@ find_empty_tanks<-function(file){
 find_occupied_tanks<-function(file){
   
   tanks<-as.character(file$Tank.Name)
-  #tanks<- file$Tank.Name
+
   tanks<-tanks[!is.na(tanks)]
   occupied_tanks<-c()
   for (i in 1:length(tanks)){
     x<-length(unlist(strsplit(as.character(file[i,4]),"")))
-    #print(x)
+
     if(x>1){
       occupied_tanks<-append(occupied_tanks,file[i,1])
     }
@@ -101,10 +101,10 @@ track_editing<- function(mat){
   edits<-c()
   for(i in 1:length(row.names(mat))){
     check<- mat[i,1]==mat[i,2]
-    #print(check)
+
     if (check==F){
       edits<-append(edits, paste0("Edited ", row.names(mat)[i]," from ",as.character(mat[i,1]), " to ",as.character(mat[i,2]), " , "))
-      #print(edits)
+
     }
   }
   return(edits)
@@ -210,7 +210,7 @@ empty_selection_check<-function(selected_rows,file){
   empty_check=FALSE
   for( i in 1:length(selected_rows)){
     check<- is.na(file[selected_rows[i],2])
-    #print(empty_check)
+
     if(check==T){
       empty_check=TRUE
     }
@@ -232,7 +232,7 @@ create_label <- function(label_info) {
   fit_height<-function(name){
     cex_value <- 0.5
     text_height <- strheight(name)
-    #print(text_width)
+
     maxheight=10
     if(text_height>maxheight){
       cex_value<-(maxheight/text_height)*cex_value
@@ -243,7 +243,7 @@ create_label <- function(label_info) {
   fit_text<-function(name){
     cex_value <- 1
     text_width <- strwidth(name, cex = cex_value)
-    #print(text_width)
+
     maxwidth=7.5
     if(text_width>maxwidth){
       cex_value<-maxwidth/text_width
@@ -305,11 +305,11 @@ check_rds_format <- function(rdsfile) {
     return(FALSE)
   }
   # Check RoomName lengths in nursery_info
-  if (length(rdsfile$nursery_info$RoomName) <= 1) {
+  if (length(rdsfile$nursery_info$RoomName) < 1) {
     return(FALSE)
   }
   # Check RoomName lengths in adult_info
-  if (length(rdsfile$adult_info$RoomName) != 2) {
+  if (length(rdsfile$adult_info$RoomName) < 2) {
     return(FALSE)
   }
   # Check column counts in Archive and Database_logs
@@ -334,7 +334,6 @@ check_rds_format <- function(rdsfile) {
   }
   return(TRUE)
 }
-
 
 
 
@@ -475,10 +474,7 @@ server <- function(input, output, session) {
       h3(strong("VIEW FISH STOCK IN DIFFERENT ROOMS")),
       fluidRow(
         box(width = 12, collapsible = TRUE, title = strong("Instructions:"), "
-            Here, you will be able to visualize all the fish stocks currently present in the
-            Johnson, Streisinger and Nursery rooms. First click the Update Fish Rooms button.Then, select the required fish room
-            from the dropdown box and click view. You can also download the current sheet using 
-              the download button.")),
+            Here, you can visualize all the fish stocks currently present in your fish rooms. First, click the Update Fish Rooms button. Then, select the desired fish room from the dropdown menu and click Show Fish Stocks. You can also download the current data sheet using the Download button.")),
       wellPanel(
         actionButton(inputId = "update_room_button", label="Update Fish Rooms"),
 
@@ -568,13 +564,14 @@ server <- function(input, output, session) {
       )
     }else{
       n_occu<- length(unlist(find_occupied_tanks(room_map())))
+      n_free<-length(unlist(find_empty_tanks(room_map())))
       output$room_stats_occupied_n<-renderText({
-        paste0(n_occu,", ",round((n_occu/320)*100), "%")
+        paste0(n_occu,", ",round((n_occu/(n_occu+n_free))*100), "%")
       })
       
-      n_free<-length(unlist(find_empty_tanks(room_map())))
+      
       output$room_stats_unoccupied_n<-renderText({
-        paste0(n_free,", ",round((n_free/320)*100),"%")
+        paste0(n_free,", ",round((n_free/(n_occu+n_free))*100),"%")
       })
       
       room<-room_map()
@@ -591,7 +588,7 @@ server <- function(input, output, session) {
       remaining_days <- avg_days %% 365.25
       months <- floor(remaining_days / 30.4375)
       days <- floor(remaining_days %% 30.4375)
-      #print(mean_weeks)
+
       
       output$room_stats_avg_fish_age<-renderText({
         paste(years, "years", months, "months", days, "days")
@@ -651,12 +648,7 @@ server <- function(input, output, session) {
     fluidPage(
       fluidRow(
         box(width = 12, collapsible = TRUE, title = strong("Instructions:"), "
-            Here, you will be able to add fish stocks in to the
-            Johnson, Streisinger and Nursery rooms. First select the tab depending whether you want to add larval fish
-            or Adult Fish. Then, fill out the respective form shown in the given tab and
-        hit submit. Then, you will be asked to verify the information you provided and finally,
-        click on the confirm button to add your stock to the database. Once you hit confirm button, your 
-        action will be recorded in the log book.You can add another stock by hitting the reset button.")
+            Here, you can add fish stocks to the Adult Fish Rooms or Nursery Rooms. First, select the appropriate tab based on whether you want to add Larval Fish or Adult Fish. Then, complete the respective form displayed in the selected tab and click Submit. You will be asked to verify the information you provided; once verified, click the Confirm button to add your stock to the database. Your action will be recorded in the logbook. To add another stock, click the Reset button.")
       ),
       tabsetPanel(
         
@@ -664,7 +656,7 @@ server <- function(input, output, session) {
                  div(id="larval_addition",
                      h3(strong("ADD LARVAL FISH INTO THE DATABASE")),
                      wellPanel(
-                       p(style=  "color:blue",strong("Please select the required nursery first from the drop down list below and then click load to update the 
+                       p(style=  "color:blue",strong("First, select the required nursery room from the drop down list below and then click Load to update the 
                                                          current status of the respective fish room."
                        )),
                        selectizeInput(inputId = "Nursery_choices_add", label = "Select the Nursery Room: ", choices= NULL ,selected=NULL, multiple = F,options = list(create=F, placeholder = "Select Nursery Room")),
@@ -718,7 +710,7 @@ server <- function(input, output, session) {
                  div(id="adult_addition",
                      h3(strong("ADD ADULT FISH INTO THE DATABASE")),
                      wellPanel(
-                       p(style=  "color:blue",strong("Please select the required fish room first from the drop down list below and then click load to update the 
+                       p(style=  "color:blue",strong("First, select the required fish room from the drop down list below and then click Load to update the 
                                                          current status of the respective fish room."
                        )),
                        selectizeInput(inputId = "fishroom_choices_adult_add", label = "Select the Fish Room: ", choices= NULL ,selected=NULL, multiple = F,options = list(create=F, placeholder = "Select Fish Room")),
@@ -1212,12 +1204,9 @@ server <- function(input, output, session) {
     fluidPage(
       fluidRow(
         box(width = 12, collapsible = TRUE, title = strong("Instructions:"), "
-            Here, you will be able to transfer fish from one room to another. First you have to load the Fish room from which the stock 
-           needs to be transferred. Separate tabs are given for transferring fish from nursery,  and within and between the adult fish rooms.
-           Then, you need to load the fish room to where the stock that needs to be transferred.
-           Then, you have to select the stock number for nursery fish transfer or tank location for adult fish transfer to select the stock.  You can change the fish number, Genotype, Experiment label and Food label
-           at the location where it is transferred. Once you submit the form, you will be asked to verify your action and finally,  click the confirm button. 
-           Once you confirm, you actions will be logged. You can transfer another fish by hitting the reset button. 
+           Here, you can transfer fish from one room to another. First, load the fish room from which the stock needs to be transferred. Separate tabs are provided for transferring fish from the Nursery or within and between Adult Fish Rooms. Next, load the fish room where the stock will be transferred.
+
+For Nursery fish transfers, select the stock number, and for Adult Fish transfers, select the tank location to choose the stock. You can update the fish number, genotype, experiment label, and food label for the new location. Once you submit the form, you will be prompted to verify your action. Finally, click the Confirm button to complete the transfer. Your actions will be logged. To transfer another fish, click the Reset button.
            ")),
       br(),
       br(),
@@ -1230,10 +1219,6 @@ server <- function(input, output, session) {
                        p(style=  "color:blue",strong("Please select the required nursery first from the drop down list below and then click Upload to update the 
                                                          current status of the respective fish room."
                        )),
-                       # selectInput("nursery_choices_transfer", "Select the Nursery room: ", choices = list(
-                       #   "Walker Nursery",
-                       #   "Johnson Nursery"
-                       # )),
                        
                        selectizeInput(inputId = "nursery_choices_transfer", label = "Select the Fish Room: ", choices= NULL ,selected=NULL, multiple = F,options = list(create=F, placeholder = "Select Fish Room")),
                        
@@ -1268,8 +1253,7 @@ server <- function(input, output, session) {
                                h5(strong(textOutput("nursery_transfer_room_selection"))),
                                br(),
                                selectizeInput(inputId = "Select_destination_tank_nursery_transfer", label = "Destination Tank name* (Tip: select multiple tanks to transfer simultaneously to several locations.)",multiple = T, selected=NULL,choices= NULL , options = list(create=F, placeholder = "Type tank name")),
-                               
-                               #numericInput(inputId = "nursery_transfer_n", label="No of fish to transfer* :", value = 1 , min=1),
+                            
                                selectizeInput(inputId = "nursery_transfer_n", label = "No of fish to transfer in each tank*", choices= NULL ,multiple = F,options = list(create=F, placeholder = "Fish Number to transfer")),
                                selectizeInput(inputId = "Experiment_label_nursery_transfer", label = "Experiment label*", choices= NULL ,multiple = T,options = list(create=T, placeholder = "Select Experiment label")),
                                selectizeInput(inputId = "Food_label_adult_nursery_transfer", label = "Food label*", choices= NULL ,multiple = F,options = list(create=F, placeholder = "Available Food label")),
@@ -1293,7 +1277,7 @@ server <- function(input, output, session) {
                      h3(strong("TRANSFER FISH WITHIN A ADULT FISH ROOM")),
                      wellPanel(
                        useShinyjs(),
-                       p(style=  "color:blue",strong("Please select the required fish room first from the drop down list below and then click upload to update the 
+                       p(style=  "color:blue",strong("Please select the required fish room first from the drop down list below and then click Upload to update the 
                                                          current status of the respective fish room."
                        )),
                        selectizeInput(inputId = "adult_choices_transfer", label = "Select the Fish Room: ", choices= NULL ,selected=NULL, multiple = F,options = list(create=F, placeholder = "Select Fish Room")),
@@ -1341,7 +1325,7 @@ server <- function(input, output, session) {
                      h3(strong("TRANSFER FISH BETWEEN ADULT FISH ROOMS")),
                      wellPanel(
                        useShinyjs(),
-                       p(style=  "color:blue",strong("Please select the required fish room first from the drop down list below and then click upload to update the 
+                       p(style=  "color:blue",strong("Please select the required fish room first from the drop down list below and then click Upload to update the 
                                                          current status of the respective fish room."
                        )),
                        selectizeInput(inputId = "adult_choices_between_transfer", label = "Select the Fish Room: ", choices= NULL ,selected=NULL, multiple = F,options = list(create=F, placeholder = "Select Fish Room")),
@@ -2121,13 +2105,11 @@ server <- function(input, output, session) {
     fluidPage(
       fluidRow(
         box(width = 12, collapsible = TRUE, title = strong("Instructions:"), "
-            Here, you will be able to edit or euthanize any stocks present in the four Fish rooms. First you have to load the Fish room where the stock 
-           is present. Then, you have to type in the stock number (in case of nursery fish) or tank location (in case of adult fish) to select the stock that needs to be edited.
-           You can change the fish number, Genotype, Experiment label, Food label, resposible
-           and notes. Once you submit the form, you will be asked to verify your edits and finally,  click the confirm button. 
-           Once you confirm, your actions will be logged. You can edit another fish by hitting the reset button. If you click on the Euthanize button, all the fish of the selected
-           stock number/tank location
-           will be removed from the fish room map.There are two separate tabs available for making individual tanks as well as bulk edits.
+Here, you can edit or euthanize any stocks in your fish rooms. First, load the fish room where the stock is located. Then, enter the stock number (for nursery fish) or tank location (for adult fish) to select the stock you want to edit.
+
+You can modify details such as the fish number, genotype, experiment label, food label, responsible person, and notes. After submitting the form, you will be prompted to verify your edits. Finally, click the Confirm button to save your changes. Your actions will be logged. To edit another stock, click the Reset button.
+
+If you click the Euthanize button, all the fish associated with the selected stock number or tank location will be removed from the fish room map. Separate tabs are provided for individual tank edits and bulk edits.
            ")),
       br(),
       br(),
@@ -2138,8 +2120,8 @@ server <- function(input, output, session) {
                    useShinyjs(),
                    div(id="edit_fish_room_options",
                        
-                       p(style=  "color:blue",strong("Please select the required fish room first from the drop down list below and then click upload to update the 
-                                                         current status of the respective fish room. Then click on any fish that you wish to edit."
+                       p(style=  "color:blue",strong("Please select the required fish room first from the drop down list below and then click Upload to update the 
+                                                         current status of the respective fish room. Then click on any fish on the table that you wish to edit."
                        )),
                        selectizeInput(inputId = "edit_fish_room_choices", label = "Select the Fish Room: ", choices= NULL ,selected=NULL, multiple = F,options = list(create=F, placeholder = "Select Fish Room")),
                        
@@ -2221,9 +2203,7 @@ server <- function(input, output, session) {
                    useShinyjs(),
                    div(id="bulk_edit_fish_room_options",
                        
-                       p(style=  "color:blue",strong("Please select the required fish room first from the drop down list below and then click upload to update the 
-                                                         current status of the respective fish room. Here, you can select multiple tanks - in the adult room or
-                                                     multiple stock numbers -in the nursery room to make bulk edit. Selection can be done byselecting the rows in the table below."
+                       p(style=  "color:blue",strong("Please select the required fish room from the dropdown list below and click Upload to update the current status of the selected fish room. You can make bulk edits by selecting multiple tanks in the Adult Room or multiple stock numbers in the Nursery Room. To do so, simply select the desired rows in the table below."
                        )),
                        selectizeInput(inputId = "bulk_edit_fish_room_choices", label = "Select the Fish Room: ", choices= NULL ,selected=NULL, multiple = F,options = list(create=F, placeholder = "Select Fish Room")),
                        
@@ -3095,6 +3075,9 @@ server <- function(input, output, session) {
   
   observeEvent(input$edit_fish_room_upload,{
     shinyjs::show("edit_fish_room_upload_hide")
+    fishdb<-readRDS("fishdatabase.rds")
+    nursery_rooms<-fishdb[["nursery_info"]][,1]
+    adult_rooms<-fishdb[["adult_info"]][,1]
   
       if(is.element(input$edit_fish_room_choices,adult_rooms)){
       shinyjs::show("edit_adult_room")
@@ -3116,15 +3099,19 @@ server <- function(input, output, session) {
   
   observeEvent(input$edit_fish_room_upload,{
     fishdb<-readRDS("fishdatabase.rds")
+    nursery_rooms<-fishdb[["nursery_info"]][,1]
+    adult_rooms<-fishdb[["adult_info"]][,1]
     if(is.element(edit_fishroom_choice(),adult_rooms)){
       a_room_loc<-locate_room(fishdb[["adult_info"]], edit_fishroom_choice())
       zebra<-fishdb[[fishdb[["adult_info"]]$db_list_name[a_room_loc]]]
       tank_names <-find_occupied_tanks(zebra)
+
       updateSelectizeInput(session, inputId = "edit_Afish_targets" ,choices = tank_names,server= T,selected = NULL)
     }else if (is.element(edit_fishroom_choice(),nursery_rooms)){
       n_room_loc<-locate_room(fishdb[["nursery_info"]], edit_fishroom_choice())
       zebra<-fishdb[[fishdb[["nursery_info"]]$db_list_name[n_room_loc]]]
       stock_numbers<- zebra[,2]
+
       updateSelectizeInput(session, inputId = "edit_Nfish_targets" ,choices = stock_numbers,server= T,selected = NULL)
     }
     
@@ -3150,30 +3137,39 @@ server <- function(input, output, session) {
       ""
     })
     
-    observeEvent(input$edit_fish_room_quickview_rows_selected,{
-      selected_rows <- input$edit_fish_room_quickview_rows_selected
-      if(length(selected_rows)>0){
-        if(is.element(edit_fishroom_choice(),adult_rooms)){
-          selected_data1 <- zebra[selected_rows, ]
-          tank_names <-find_occupied_tanks(zebra)
-          updateSelectizeInput(session, inputId = "edit_Afish_targets" ,choices = tank_names,server= T, selected = selected_data1[1])
-          output$selected_rows_edit_Afish_targets_output<- renderPrint(
-            print(selected_data1)
-          )
-          shinyjs::hide("edit_Adult_stocks")
-        }else if(is.element(edit_fishroom_choice(),nursery_rooms)){
-          selected_data2 <- zebra[selected_rows, ]
-          stock_numbers<- zebra[,2]
-          updateSelectizeInput(session, inputId = "edit_Nfish_targets" ,choices = stock_numbers,server= T, selected = selected_data2[2])
-          output$selected_rows_edit_Nfish_targets_output<- renderPrint(
-            print(selected_data2)
-          )
-          shinyjs::hide("edit_nursery_stock")
-        }
-        
-      }
-    })
+
     
+  })
+  
+  observeEvent(input$edit_fish_room_quickview_rows_selected,{
+    selected_rows <- input$edit_fish_room_quickview_rows_selected
+    fishdb<-readRDS("fishdatabase.rds")
+    nursery_rooms<-fishdb[["nursery_info"]][,1]
+    adult_rooms<-fishdb[["adult_info"]][,1]
+    if(length(selected_rows)>0){
+      if(is.element(edit_fishroom_choice(),adult_rooms)){
+        a_room_loc<-locate_room(fishdb[["adult_info"]], edit_fishroom_choice())
+        zebra<-fishdb[[fishdb[["adult_info"]]$db_list_name[a_room_loc]]]
+        selected_data1 <- zebra[selected_rows, ]
+        tank_names <-find_occupied_tanks(zebra)
+        updateSelectizeInput(session, inputId = "edit_Afish_targets" ,choices = tank_names,server= T, selected = selected_data1[1])
+        output$selected_rows_edit_Afish_targets_output<- renderPrint(
+          print(selected_data1)
+        )
+        shinyjs::hide("edit_Adult_stocks")
+      }else if(is.element(edit_fishroom_choice(),nursery_rooms)){
+        n_room_loc<-locate_room(fishdb[["nursery_info"]], edit_fishroom_choice())
+        zebra<-fishdb[[fishdb[["nursery_info"]]$db_list_name[n_room_loc]]]
+        selected_data2 <- zebra[selected_rows, ]
+        stock_numbers<- zebra[,2]
+        updateSelectizeInput(session, inputId = "edit_Nfish_targets" ,choices = stock_numbers,server= T, selected = selected_data2[2])
+        output$selected_rows_edit_Nfish_targets_output<- renderPrint(
+          print(selected_data2)
+        )
+        shinyjs::hide("edit_nursery_stock")
+      }
+      
+    }
   })
   
   ##############################################################################################################################
@@ -3183,6 +3179,7 @@ server <- function(input, output, session) {
   observeEvent(input$edit_Afish,{
     req(input$edit_Afish_targets)
     fishdb<-readRDS("fishdatabase.rds")
+    adult_rooms<-fishdb[["adult_info"]][,1]
     if(is.element(edit_fishroom_choice(),adult_rooms)){
       a_room_loc<-locate_room(fishdb[["adult_info"]], edit_fishroom_choice())
       zebra_ad<-fishdb[[fishdb[["adult_info"]]$db_list_name[a_room_loc]]]
@@ -3252,6 +3249,7 @@ server <- function(input, output, session) {
   observeEvent(input$edit_Afish_target_submit,{
     req(input$edit_Afish_targets)
     fishdb<-readRDS("fishdatabase.rds")
+    adult_rooms<-fishdb[["adult_info"]][,1]
     if(is.element(edit_fishroom_choice(),adult_rooms)){
       a_room_loc<-locate_room(fishdb[["adult_info"]], edit_fishroom_choice())
       zebra_ad<-fishdb[[fishdb[["adult_info"]]$db_list_name[a_room_loc]]]
@@ -3301,6 +3299,7 @@ server <- function(input, output, session) {
   observeEvent(input$AFish_edit_confirm,{
     req(input$edit_Afish_targets)
     fishdb<-readRDS("fishdatabase.rds")
+    adult_rooms<-fishdb[["adult_info"]][,1]
     if(is.element(edit_fishroom_choice(),adult_rooms)){
       a_room_loc<-locate_room(fishdb[["adult_info"]], edit_fishroom_choice())
       zebra_ad<-fishdb[[fishdb[["adult_info"]]$db_list_name[a_room_loc]]]
@@ -3466,6 +3465,7 @@ server <- function(input, output, session) {
   observeEvent(input$edit_Nfish,{
     req(input$edit_Nfish_targets)
     fishdb<-readRDS("fishdatabase.rds")
+    nursery_rooms<-fishdb[["nursery_info"]][,1]
     if (is.element(edit_fishroom_choice(),nursery_rooms)){
       n_room_loc<-locate_room(fishdb[["nursery_info"]], edit_fishroom_choice())
       zebra<-fishdb[[fishdb[["nursery_info"]]$db_list_name[n_room_loc]]]
@@ -3841,10 +3841,8 @@ server <- function(input, output, session) {
           h2(strong("IDENTIFY THE GENEALOGY TREE")),
           hr(),
           p(style = "text-align: justify;color:blue", strong("Instructions: "),"
-            Here, you will be able to identity the lineage tree of any stock present in the Archive. First, you need to upload
-            the Archive file by hitting the upload button. This will provide a quick view of the fish stocks archive and then, you can search your stock number
-            using the top left search box. Then, enter your required stock number in the field below the Archive table and hit Identify Genealogy. Once you
-            generate the genealogy you download either the genealogy tree or table by hitting the respective download button given below."),
+Here, you can identify the lineage tree of any stock in the archive. First, upload the archive file by clicking the Upload button. This will display a quick view of the fish stock archive. Use the search box in the top-left corner to locate your stock number. Then, enter the desired stock number in the field below the archive table and click Identify Genealogy. 
+            Once the genealogy is generated, you can download it as a tree or table by clicking the respective Download button"),
           br(),
           p(strong("Upload the Archive file: ")),
           actionButton(inputId = "Genealogy_Archive", label="Upload"),
@@ -3905,7 +3903,7 @@ server <- function(input, output, session) {
     )
     
     stock_list<- archive[,2]
-    #print(stock_list)
+
     updateSelectizeInput(session, inputId = "Select_genealogy_stock",choices = stock_list,selected = stock_list[length(stock_list)], server=T)
     
     observeEvent(input$genealogy_quickview_rows_selected,{
@@ -4002,11 +4000,9 @@ server <- function(input, output, session) {
         h2(strong("PRINT TANK LABEL")),
         br(),
         box(width = 12, collapsible = TRUE, title = strong("Instructions:"), "
-            Here, you will be able to print label for your fish stock. First, please the select the required fish room
-            from the dropdown box and click View FishFacility Map. Then, you can click on the required fish stock row in the fish facility map, which you would like to print the label.
-            This should autopopulate details in white boxes that takes info for the label. You can edit these details if you wish, except for stock number and date of birth. 
-            Once you finalize the details for the label, click Create Label. Finally, click the Download Label button to save
-            the label in your computer. Then, you can print these with your own printer.")),
+            Here, you can print labels for your fish stock. First, select the required fish room from the dropdown menu and click View Fish Facility Map. Then, select the desired fish stock row in the map. This will automatically populate the details in the white boxes, which are used to generate the label. You can edit these details if needed, except for the stock number and date of birth.
+
+Once you finalize the label details, click Create Label. Finally, click the Download Label button to save the label to your computer, which you can then print using your own printer.")),
       wellPanel(
         selectizeInput(inputId = "print_label_Fishroom_choices", label = "Select the Fish Room: ", choices= NULL ,selected=NULL, multiple = F,options = list(create=F, placeholder = "Select Fish Room")),
         
@@ -4084,6 +4080,8 @@ server <- function(input, output, session) {
   print_label_room_map<-eventReactive(input$print_label_fishroom_upload,{
     
     fishdb<-readRDS("fishdatabase.rds")
+    adult_rooms<-fishdb[["adult_info"]][,1]
+    nursery_rooms<-fishdb[["nursery_info"]][,1]
     if(is.element(print_label_fishroom_choice(),adult_rooms)){
       a_room_loc<-locate_room(fishdb[["adult_info"]], print_label_fishroom_choice())
       zebra<-fishdb[[fishdb[["adult_info"]]$db_list_name[a_room_loc]]]
@@ -4115,7 +4113,7 @@ server <- function(input, output, session) {
   observeEvent(input$print_label_fishroom_map_rows_selected,{
     req(input$print_label_fishroom_map_rows_selected)
     selected_rows <- input$print_label_fishroom_map_rows_selected
-    #print(selected_rows)
+
     
     if(length(selected_rows)>0){
       updateSelectizeInput(session, inputId = "print_label_stockn",choices = list(print_label_room_map()[selected_rows,2]), server=T)
@@ -4138,7 +4136,7 @@ server <- function(input, output, session) {
       list(src = "label.png", width = "100%", height = "100%", alt = "Generated Label")
     }, deleteFile = F)
     
-    #print(label_info)
+
     output$Download_label_button<-downloadHandler(
       filename=function(){
         paste0("Print_Label_for_Stock_ ",input$print_label_stockn,".png")
@@ -4165,21 +4163,31 @@ server <- function(input, output, session) {
       wellPanel(
         h2(strong("VMS FISH DATABASE")),
         hr(),
-        p(style="text-align: justify;font-size:16px",("This database is designed for the entire zebrafish community. Currently, it includes three adult fish rooms and two nurseries. At least two adult fish rooms are required for the database to function properly.
+        p(style="text-align: justify;font-size:16px",("Welcome to the VMS Fish Database, a tool designed to support the zebrafish research community with efficient data management for fish facilities. By default, the database includes two adult fish rooms and one nursery, which are essential for proper functionality. You can add, delete, or rename fish rooms through the Admin Settings.
 
-        Each fish stock must have a unique stock number when added to a nursery; however, multiple tanks in the adult rooms may share the same stock number. Complete information is mandatory every time you add a new stock. This ensures accurate tracking of each fish line's growth and lineage.
+Each fish stock must have a unique stock number when added to the nursery; however, multiple tanks in the adult rooms can share the same stock number. Providing complete information is mandatory when adding new stocks to ensure accurate tracking of each fish line's growth and lineage.
 
-        One key restriction of this database is that it does not support splitting a tank location and assigning two separate stock numbers with a divider. In such cases, we recommend using the same stock number for both sections of the divided tank and adding relevant details in the notes."))
+Whenever you add a new fish stock to the nursery, it will also be added to the Archive. Since stock numbers must be unique, Archive entries will be overwritten if you try to add two fish stocks with the same stock number.
+
+A key limitation of this database is that it does not support splitting a tank location to assign two separate stock numbers with a divider. In such cases, we recommend using the same stock number for both sections of the divided tank and including relevant details in the notes.")),
+        hr(),
+        h2(strong("CITE US")),
+        hr(),
+        p(style="text-align: justify;font-size:16px",("
+                                                      
+        If you use this database for managing your fish stocks, please cite us.                                              
+                                                      "))
+        
       ),
       wellPanel(
         
         h2(strong("DATABASE FISH ROOM MAP")),
         hr(),
-        p(style="text-align: justify",("Following is the fish room map of this database. To change the fish map, you need administrator privileges. 
-                                       First, sign in with your admin password, then click the About tab and click the Admin Settings tab.
-                                       Now, you can come back to the About tab, you should see the browse button. Click browse to locate your
-                                       new fish facility map. The new map cannot be more than 500kb. Once the upload is complete, click 
-                                       REPLACE FISH MAP button to complete the changes.")),
+        p(style="text-align: justify;font-size:16px",("Below is the fish room map of this database. To modify the fish map, you must have administrator privileges.
+
+First, sign in using your admin password, then navigate to the About tab and click the Admin Settings tab. This will enable the options for changing the fish map. Return to the About tab, where you will now see a Browse button below the current fish map. Click the Browse button to select your new fish facility map file. Ensure the new map file is no larger than 500 KB.
+
+Once the upload is complete, click the Replace Fish Map button to finalize the changes.")),
         br(),
       
         uiOutput("image_ui"),
@@ -4197,11 +4205,13 @@ server <- function(input, output, session) {
       wellPanel(
         h2(strong("PROVIDE FEEDBACK & REPORT BUGS")),
         hr(),
-        p(style="text-align: justify;font-size:16px", ("This website is currently at its very first versions.
-                                      It is possible that you will encounter bugs while using this database. If you find any 
-                                      issues, please report at the following GitHub repository : "),strong(tags$a("ShinyApps", href = "https://github.com/vishnums007/ShinyApps/issues", target = "_blank")),
-          (". You are also welcome to report any suggestions and improvements to this 
-                                          database. Thank you all for using this database.") )
+        p(style = "text-align: justify; font-size:16px", 
+          "This database is in its early versions, and you may encounter bugs while using it. 
+   If you find any issues, please report them at the following GitHub repository: ",
+          strong(tags$a("ShinyApps", href = "https://github.com/vishnums007/ShinyApps/issues", target = "_blank")),
+          ". You are also welcome to share suggestions and improvements for this database. 
+   Thank you for using it."
+        )
       ),
       wellPanel(
         h2(strong("DATABASE UPDATE REPORT")),
@@ -4209,26 +4219,26 @@ server <- function(input, output, session) {
         p(style="text-align: justify;font-size:16px", ("Following are the updates added to this database: ")),
         p(strong(tags$u("v1.0.0"))),
         tags$ul(
-          tags$li("081123: Adding notes is mandatory while adding fish to the nursery and adult room"),
+          tags$li("081123: Adding notes is mandatory while adding fish to the nursery and adult room."),
           tags$li("081623: To edit, transfer and make genealogy, you can directly select the required stock from the table.
                   This is will autopopulate the stock number or tank name."),
-          tags$li("082723: Added color code and stats to the veiw stocks table"),
+          tags$li("082723: Added color code and stats to the veiw stocks table."),
           tags$li("083123: Added option to transfer fish from Johnson nursery to both Streisinger and Johnson room."),
           
         ),
         p(strong(tags$u("v1.1.0"))),
         tags$ul(
-          tags$li("092423: Added bulk editing option for both adult and nursery room"),
-          tags$li("092523: Added simultaneous transfer of a nursery stock to multiple tanks in the adult room")
+          tags$li("092423: Added bulk editing option for both adult and nursery room."),
+          tags$li("092523: Added simultaneous transfer of a nursery stock to multiple tanks in the adult room.")
         ),
         p(strong(tags$u("v1.1.1"))),
         tags$ul(
           tags$li("102724: Fixed a bug on the bulk transfer from the nursery. Updated the fish facilty map."),
-          tags$li("102924: Fixed a bug on the default memory update of empty tank list")
+          tags$li("102924: Fixed a bug on the default memory update of empty tank list.")
         ),
         p(strong(tags$u("v1.2.0"))),
         tags$ul(
-          tags$li("103124: Added print label function")
+          tags$li("103124: Added print label function.")
         ),
         p(strong(tags$u("v1.3.0"))),
         tags$ul(
@@ -4246,33 +4256,34 @@ server <- function(input, output, session) {
         ),
         p(strong(tags$u("v1.4.1"))),
         tags$ul(
-          tags$li("112224: Minor bug fixes on handling empty fish rooms, genealogy and fish editing"),
+          tags$li("112224: Minor bug fixes on handling empty fish rooms, genealogy and fish editing."),
           tags$li("112324: Bug fixed on handling numeric inputs. Improved more functions to handle user input errors.")
+          
+        ),
+        p(strong(tags$u("v1.4.2"))),
+        tags$ul(
+          tags$li("121424: Fixed a bug on editing fish on a newly added fish room."),
+          tags$li("121524: Fixed a bug on restoring backup rds file.")
           
         )
       ),
       br(),
-      p(style= "text-align: center",(strong(HTML("&copy; 2024 Vishnu Muraleedharan Saraswathy & Mokalled Lab.")))),
-      p(style= "text-align:center", em("v1.4.1 last updated: 23-November-2024. This database is powered using Shiny and R")),
+      p(style= "text-align: center",(strong(HTML("&copy;  2024 Washington University in St. Louis. All rights reserved.")))),
+      p(style= "text-align:center", em("v1.4.2 last updated: 15-December-2024. This database is powered using Shiny and R")),
+
       br(),
-      p(style="text-align: justify;font-size:10px",em("MIT License:
-            Permission is hereby granted, free of charge, to any person obtaining a copy
-            of this software and associated documentation files (the Software), to deal
-            in the Software without restriction, including without limitation the rights
-            to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-            copies of the Software, and to permit persons to whom the Software is
-            furnished to do so, subject to the following conditions:
-            
-            The above copyright notice and this permission notice shall be included in all
-            copies or substantial portions of the Software.
-            
-            THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-            IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-            FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-            AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-            LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-            OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-            SOFTWARE."))
+        p(style="text-align: justify;font-size:10px",em("
+  
+        By using this software, you agree to the Washington University in St. Louis (Washington University) Software License.
+        
+        Washington University Software License:
+        
+        Copyright Notice: ©2024 Washington University in St. Louis.
+        
+         Washington University hereby grants to you a non-transferable, non-exclusive, royalty-free, non-commercial, non- clinical, not-for-use with human subjects, research license to use and copy the computer code that may be downloaded within this site (the “Software”). You agree to include this license and the above copyright notice in all copies of the Software. The Software may not be distributed, shared, or transferred to any third party. This license does not grant any rights or licenses to any other patents, copyrights, or other forms of intellectual property owned or controlled by Washington University.
+        YOU AGREE THAT THE SOFTWARE PROVIDED HEREUNDER IS EXPERIMENTAL AND IS PROVIDED “AS IS”, WITHOUT ANY WARRANTY OF ANY KIND, EXPRESSED OR IMPLIED, INCLUDING WITHOUT LIMITATION WARRANTIES OF MERCHANTABILITY OR FITNESS FOR ANY PARTICULAR PURPOSE, OR NON-INFRINGEMENT OF ANY THIRD-PARTY PATENT, COPYRIGHT, OR ANY OTHER THIRD-PARTY RIGHT. IN NO EVENT SHALL THE CREATORS OF THE SOFTWARE OR WASHINGTON UNIVERSITY BE LIABLE FOR ANY DIRECT, INDIRECT, SPECIAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF OR IN ANY WAY CONNECTED WITH THE SOFTWARE, THE USE OF THE SOFTWARE, OR THIS AGREEMENT, WHETHER IN BREACH OF CONTRACT, TORT OR OTHERWISE, EVEN IF SUCH PARTY IS ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+        "))
+
     )
   })
   ###################################################################Server side code for uploading fish map###################################
@@ -4317,9 +4328,9 @@ server <- function(input, output, session) {
     fluidPage(
       fluidRow(
         box(width = 12, collapsible = TRUE, title = strong("Instructions:"), "
-            These tabs are only for administrators of this fish database. Here, you can add or remove fish tanks and fish rooms. Then, you can also
-            add new user accounts and edit passwords of the existing user and administrator accounts.You can backup your entire fish database info and 
-            completely clean them. Additionally, there is also an option to restore the fishdatabase info to a previously backedup rds file.
+            These tabs are intended for administrators of the fish database. Here, you can add or remove fish tanks and fish rooms. You can also create new user accounts and edit the passwords of existing user and administrator accounts.
+
+Additionally, you have the option to back up the entire fish database and clean the database completely. There is also an option to restore the fish database from a previously backed-up RDS file.
            ")),
       br(),
       br(),
@@ -4329,11 +4340,11 @@ server <- function(input, output, session) {
                      h3(strong("ADD/REMOVE/RENAME FISH TANKS")),
                      wellPanel(
                        useShinyjs(),
-                       p(style=  "color:black",strong("Please select the required adult fish room and then click Upload to update the 
-                                                         current status of the respective fish room. To remove tanks, simply
-                                                     select all the rows from the table and click Delete Tanks button. To add tanks, click Create Tanks
-                                                     button.Then, provide the tank prefix name and number of tanks to create. It is strongly advised
-                                                    to download the respective file and backup before removing tanks."
+                       p(style=  "color:black",strong("Please select the required adult fish room and click Upload to update the current status of the respective fish room.
+
+To remove tanks, simply select all the rows from the table and click the Delete Tanks button. To add tanks, click the Create Tanks button. Then, provide the tank prefix name and specify the number of tanks to create.
+
+It is strongly advised to download the respective file and create a backup before removing any tanks."
                        )),
                        selectizeInput(inputId = "set_edit_tanks", label = "Select the Fish Room: ", choices= NULL ,selected=NULL, multiple = F,options = list(create=F, placeholder = "Select Fish Room")),
                        
@@ -4371,11 +4382,11 @@ server <- function(input, output, session) {
                      h3(strong("ADD/REMOVE/RENAME FISH ROOMS")),
                      wellPanel(
                        useShinyjs(),
-                       p(style=  "color:blue",strong("Here, you have options to edit the name of each rooms and create or delete existing room.
-                       Two adult fish rooms and one nursery room is essential for the functionality of this database. So, you won't be able delete them. All other
-                       rooms are removable. It is strongly advised
-                                                    to download the respective file and backup before removing them.
-                                                    To begin, please click one of the buttons below."
+                       p(style=  "color:blue",strong("Here, you have the option to edit the name of each room and create or delete existing rooms. Two adult fish rooms and one nursery room are essential for the functionality of this database, so they cannot be deleted. All other rooms can be removed.
+
+It is strongly advised to download the respective file and create a backup before removing any rooms.
+
+To begin, please click one of the buttons below."
                        )),
                        hr(),
                        fluidRow(column(width = 2,actionButton(inputId = "create_new_room", label="CREATE")),
@@ -4470,11 +4481,12 @@ server <- function(input, output, session) {
                      h3(strong("PERFORM BACKUP & CLEAN SLATE PROTOCOL")),
                      wellPanel(
                        useShinyjs(),
-                       p(style=  "color:red",strong("IMPORTANT !! Here, you will able to wipe all the data present in  this database, such
-                                                   as fish stocks in nursery and adult fish rooms, logs and archive. It is strongly advised
-                                                    to download a backup before clearing them. Check files you need to
-                                                    clear data and click the button CLEAN SLATE "
-                       )),
+                       p(style = "color:red", 
+                         strong("IMPORTANT: Here, you can delete all data present in this database, including fish stocks in the nursery and adult fish rooms, logs, and the archive.
+
+  Select the files you wish to delete and click the CLEAN SLATE button to proceed. Before performing the CLEAN SLATE PROTOCOL, we strongly advise you to create a full database backup by clicking the CREATE A FULL DATABASE BACKUP button. This will download an .rds file containing all the information related to your database.
+                                 You can use this rds file to restore your database.")
+                       ),
                        hr(),
                        checkboxGroupInput(inputId = "clean_slate_list", label = "Select the sheets to clear data :", choices = c("Nursery Fish Rooms", "Adult Fish Rooms",
                                                                                                                                  "User Logs", "Archives")),
@@ -4502,12 +4514,11 @@ server <- function(input, output, session) {
                      h3(strong("RESTORE THE DATABASE")),
                      wellPanel(
                        useShinyjs(),
-                       p(style=  "color:green",strong("Here, you will be able restore your fish database to a previously backed up version.
-                                                      This will be particularly useful when someone accidently performs clean slate protocol or
-                                                      a newer version of the fishdatabase is available. If you created a full database backup (.rds file)
-                                                      previously, you can  simply upload it here after a clean slate protocol or an app update to restore
-                                                      to that previous backup timepoint.First click Browse to select the rds file saved in your computer.
-                                                      Once the rds file is uploaded, click the button RESTORE DATABASE FILE."
+                       p(style=  "color:green",strong("Here, you can restore your fish database to a previously backed-up version. This feature is particularly useful if someone accidentally performs the clean slate protocol or if a newer version of the database is available.
+
+If you have previously created a full database backup (.rds file), you can easily upload it here after performing a clean slate protocol or an app update to restore the database to the backup's timepoint.
+
+First, click Browse to select the .rds file saved on your computer. Once the file is uploaded, click the RESTORE DATABASE FILE button to complete the restoration."
                        )),
                        br(),
                        fileInput(
@@ -4738,7 +4749,7 @@ server <- function(input, output, session) {
   observeEvent(input$new_room_submit,{
     fishdb<-readRDS("fishdatabase.rds")
     user_inputs<-c(input$new_room_name, input$new_room_format)
-    #print(user_inputs)
+
     qc<-check_errors(user_inputs)
     rooms<-c(fishdb[["nursery_info"]][,1],fishdb[["adult_info"]][,1])
     check_name_dup<- dup_check(input$new_room_name,rooms)
@@ -4850,9 +4861,9 @@ server <- function(input, output, session) {
     adult_rooms<-fishdb[["adult_info"]][,1]
     if(is.element(input$remove_room_list,nursery_rooms)){
       info_loc<-which(input$remove_room_list==nursery_rooms)
-      #print(info_loc)
+
       db_loc<-fishdb[["nursery_info"]][info_loc,2]
-      #print(db_loc)
+
       permission<-fishdb[["nursery_info"]][info_loc,3]
       if(permission=="No"){
         output$set_remove_room_error<- renderText(
@@ -5057,7 +5068,7 @@ server <- function(input, output, session) {
   ###################################Adding new user accounts####################################################################################
   observeEvent(input$new_user_submit,{
     user_inputs<-c(input$new_user_name,input$new_pwd, input$new_pwd_confirm)
-    #print(user_inputs)
+
     qc<-check_errors(user_inputs)
     check_name_dup<- dup_check(input$new_user_name,user_base$user)
     if(qc==T){
@@ -5213,7 +5224,7 @@ server <- function(input, output, session) {
   ##################################### Clean Slate Protocol ########################################################################
   
   observeEvent(input$clean_slate_submit,{
-    #print(input$clean_slate_list)
+
     if(length(input$clean_slate_list)>0){
       
       output$clean_state_error<-renderText(
